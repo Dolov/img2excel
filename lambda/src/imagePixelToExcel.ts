@@ -4,11 +4,21 @@ import Jimp from 'jimp'
 import XlsxPopulate from 'xlsx-populate'
 import { excelIndexToColumn, rgbToHex } from './utils'
 
+const defaultMaxWidth = 700
 
+export interface Options {
+  maxWidth: number
+  width?: number
+}
 class ImagePixelToExcel {
+  options: Options
   inputImage: any
-  constructor(inputImage: Buffer) {
+  constructor(inputImage: Buffer, options?: Options) {
     this.inputImage = inputImage
+    this.options = {
+      maxWidth: defaultMaxWidth,
+      ...options,
+    }
   }
   
   async init() {
@@ -31,7 +41,13 @@ class ImagePixelToExcel {
 
     if (!image) return null
     const oWidth = image.bitmap.width
-    const resize = oWidth > 500 ? 500 : oWidth
+    const resize = (() => {
+      const { width, maxWidth } = this.options
+      if (width) {
+        return width
+      }
+      return oWidth > maxWidth ? maxWidth : oWidth
+    })()
     // @ts-ignore
     await image.resize(resize, Jimp.AUTO);
     

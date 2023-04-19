@@ -3,7 +3,7 @@
 import fs from 'fs'
 import path from 'path'
 import AWS from 'aws-sdk'
-import ImagePixelToExcel from './imagePixelToExcel'
+import ImagePixelToExcel, { Options } from './imagePixelToExcel'
 import * as dotenv from 'dotenv'
 dotenv.config()
 
@@ -33,9 +33,9 @@ const upload = async (params: AWS.S3.PutObjectRequest) => {
   })
 }
 
-const genExcelAndUploadS3 = async (Bucket: string, Key: string) => {
+const genExcelAndUploadS3 = async (Bucket: string, Key: string, options?: Options) => {
   const objectData = await s3.getObject({ Bucket, Key }).promise();
-  const imagePixelToExcel = new ImagePixelToExcel(objectData.Body as Buffer)
+  const imagePixelToExcel = new ImagePixelToExcel(objectData.Body as Buffer, options)
   const excelData = await imagePixelToExcel.init()
   const params = {
     Bucket,
@@ -64,7 +64,7 @@ const handler = async function (event: any) {
   }
   console.log('Key && Bucket: ', Key, Bucket);
   if (Key && Bucket) {
-    const response = await genExcelAndUploadS3(Bucket, Key)
+    const response = await genExcelAndUploadS3(Bucket, Key, event.options)
     return {
       status: 200,
       data: response,
