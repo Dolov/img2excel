@@ -16,8 +16,10 @@ const App = () => {
 	const onFileChange: React.ChangeEventHandler<HTMLInputElement> = async e => {
 		const file = e.target.files?.[0]
 		if (!file) return
-		setHidden(true)
 		setLoading(true)
+		setTimeout(() => {
+			setHidden(true)
+		}, 300)
 		let compressedFile = file
 		const original = localStorage.getItem('compress') === "false"
 		if (!original) {
@@ -38,7 +40,7 @@ const App = () => {
 		
 		const formData = new FormData();
 		formData.append('file', compressedFile);
-		formData.append('fileName', compressedFile.name);
+		formData.append('fileName', file.name);
 
 		/** 上传文件至 S3 */
 		const uploadRes = await fetch('/api/upload', {
@@ -108,9 +110,10 @@ const App = () => {
 							id="upload-input"
 							type="file"
 							style={{ display: "none" }}
+							accept="image/*"
 							onChange={onFileChange}
 						/>
-						{loading && <img className='loading' src={loadingSvg} alt="" />}
+						<img className='loading' src={loadingSvg} alt="" style={{ "visibility": loading ? "visible": "hidden" }} />
 						<Button hidden={hidden} onComplete={onComplete}>
 							<div className='trigger-container'>
 								<label htmlFor="upload-input">
