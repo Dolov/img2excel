@@ -65,17 +65,18 @@ const App = () => {
 	return (
 		<div id='container'>
 			<div className='main'>
+				<a className='github' target='_blank' href="https://github.com/Dolov/img-pixel-to-excel">github</a>
 				<div className='content'>
-					<div className='title'>将图片以像素点的模式插入到 excel 中，生成 excel 文件，支持下载</div>
+					<div className='title'>将图片以像素点的模式插入到 excel 中，生成 excel 文件并下载</div>
 					<div>
 						<input
-							onChange={onFileChange}
-							type="file"
 							id="upload-input"
+							type="file"
 							style={{ display: "none" }}
+							onChange={onFileChange}
 						/>
 						<Button hidden={hidden} onComplete={onComplete}>
-							<div onClick={e => e.stopPropagation()} className='trigger-container'>
+							<div className='trigger-container'>
 								<label htmlFor="upload-input">
 									{text}
 								</label>
