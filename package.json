@@ -1,0 +1,22 @@
+{
+  "name": "img-pixel-to-excel",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "in": "concurrently \"npm run i:pages\" \"npm run i:server\"",
+    "i:pages": "cd pages && pnpm i",
+    "i:server": "cd server && pnpm i",
+    "start": "concurrently \"npm run pages\" \"npm run server\"",
+    "pages": "cd pages && npm start",
+    "server": "cd server && npm start",
+    "lambda": "cd lambda && npm run build && npm run dep"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "concurrently": "^8.0.1"
+  }
+}

@@ -1,0 +1,56 @@
+
+* {
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  height: 100vh;
+  overflow: hidden;
+
+}
+
+#container {
+  height: 100%;
+  background-image: linear-gradient(90deg, rgb(237, 237, 237),rgb(236, 236, 236)),linear-gradient(135deg, rgb(163, 125, 62) 0%, rgb(163, 125, 62) 22%,rgb(149, 100, 59) 22%, rgb(149, 100, 59) 32%,rgb(134, 75, 56) 32%, rgb(134, 75, 56) 37%,rgb(120, 50, 53) 37%, rgb(120, 50, 53) 51%,rgb(105, 25, 50) 51%, rgb(105, 25, 50) 55%,rgb(91, 0, 47) 55%, rgb(91, 0, 47) 100%),linear-gradient(112.5deg, rgb(163, 125, 62) 0%, rgb(163, 125, 62) 22%,rgb(149, 100, 59) 22%, rgb(149, 100, 59) 32%,rgb(134, 75, 56) 32%, rgb(134, 75, 56) 37%,rgb(120, 50, 53) 37%, rgb(120, 50, 53) 51%,rgb(105, 25, 50) 51%, rgb(105, 25, 50) 55%,rgb(91, 0, 47) 55%, rgb(91, 0, 47) 100%),linear-gradient(90deg, rgb(163, 125, 62) 0%, rgb(163, 125, 62) 22%,rgb(149, 100, 59) 22%, rgb(149, 100, 59) 32%,rgb(134, 75, 56) 32%, rgb(134, 75, 56) 37%,rgb(120, 50, 53) 37%, rgb(120, 50, 53) 51%,rgb(105, 25, 50) 51%, rgb(105, 25, 50) 55%,rgb(91, 0, 47) 55%, rgb(91, 0, 47) 100%); background-blend-mode:overlay, overlay, overlay, normal;
+  
+  .main {
+    height: 100%;
+    color: white;
+    padding: 50px;
+    background-color: rgba(0, 0, 0, 0.8);
+  }
+
+  .content {
+    position: relative;
+    width: 35%;
+    padding-top: 20vh;
+    z-index: 10;
+  }
+
+  .title {
+    font-size: 36px;
+    margin-bottom: 10vh;
+    text-indent: 2em;
+  }
+
+  img {
+    width: 70vw;
+    position: absolute;
+    top: 12vh;
+    left: 23vw;
+    filter: brightness(0.5);
+  }
+} 
+
+
+
+.particle-effect-button{
+  background-color: #121019;
+  color: #fff;
+  font-size: 1.2rem;
+  border: 0;
+  padding: 1.5rem 3rem;
+  border-radius: 5;
+  cursor: pointer;
+}

@@ -1,0 +1,10 @@
+node_modules
+dist
+.vscode
+.env
+deploy.sh
+excel-**.xlsx
+public
+deploy.web.sh
+.DS_Store
+.vercel
