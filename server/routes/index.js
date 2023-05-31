@@ -3,16 +3,9 @@ const { uploadToS3, invokeLambda, s3 } = require('../utils')
 
 router.prefix('/api')
 
-router.get('/', async (ctx, next) => {
-  await ctx.render('index', {
-    title: 'Hello Koa 2!'
-  })
-})
-
 router.post('/upload', async (ctx, next) => {
   const { body } = ctx.request
   const { fileName } = body
-  console.log('body: ', body);
   const file = ctx.request.files.file
   // const reader = fs.createReadStream(file.filepath)
   // const tempFilePath = `upload/${fileName}`
