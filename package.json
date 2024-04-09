@@ -1,22 +1,31 @@
 {
-  "name": "img-pixel-to-excel",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "name": "aa",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "in": "concurrently \"npm run i:pages\" \"npm run i:server\"",
-    "i:pages": "cd pages && pnpm i",
-    "i:server": "cd server && pnpm i",
-    "start": "concurrently \"npm run pages\" \"npm run server\"",
-    "pages": "cd pages && npm start",
-    "server": "cd server && npm start",
-    "lambda": "cd lambda && npm run build && npm run dep"
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "preview": "vite preview"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "dependencies": {
+    "canvg": "^4.0.1",
+    "exceljs": "^4.4.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
   "devDependencies": {
-    "concurrently": "^8.0.1"
+    "@types/react": "^18.2.66",
+    "@types/react-dom": "^18.2.22",
+    "@typescript-eslint/eslint-plugin": "^7.2.0",
+    "@typescript-eslint/parser": "^7.2.0",
+    "@vitejs/plugin-react": "^4.2.1",
+    "eslint": "^8.57.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-react-refresh": "^0.4.6",
+    "less": "^4.2.0",
+    "typescript": "^5.2.2",
+    "vite": "^5.2.0"
   }
 }
