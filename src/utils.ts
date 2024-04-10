@@ -1,8 +1,10 @@
 
 import ExcelJS from 'exceljs'
+import Compressorjs from 'compressorjs'
 
+const unit = 1024
 
-export const getKey = (index: number) => {
+const getKey = (index: number) => {
   index += 1
   let column = '';
   while (index > 0) {
@@ -17,7 +19,7 @@ export const getKey = (index: number) => {
   return column;
 }
 
-function rgbaToArgb(r: number, g: number, b: number, a: number) {
+const rgbaToArgb = (r: number, g: number, b: number, a: number) => {
   // 确保输入值在0-255之间  
   r = Math.max(0, Math.min(r, 255));
   g = Math.max(0, Math.min(g, 255));
@@ -37,35 +39,80 @@ function rgbaToArgb(r: number, g: number, b: number, a: number) {
   if (hexA.length < 2) hexB = '0' + hexA;
 
   // 拼接RGB部分的16进制字符串  
-  let hex = hexA + hexR + hexG + hexB;
+  const hex = hexA + hexR + hexG + hexB;
 
-  // 如果需要，可以返回包括Alpha通道的rgba字符串（但Alpha不是16进制）  
-  // return `rgba(${r},${g},${b},${a})`;  
-
-  // 只返回RGB部分的16进制字符串  
   return hex;
+}
+
+const compressor = (file: File, quality: number): Promise<Blob> => {
+  return new Promise((resolve) => {
+    new Compressorjs(file, {
+      quality,
+      resize: "cover",
+      maxWidth: innerWidth * 0.5,
+      // maxHeight: innerHeight * 0.5,
+      success(result) {
+        resolve(result)
+      },
+      error(err) {
+        console.log(err.message);
+      },
+    });
+  })
+}
+
+const getquality = (fileSize: number) => {
+  for (let size = 9; size >= 1; size--) {
+    if (fileSize / unit / unit > size) {
+      return 1 - size * 0.1
+    }
+  }
+  return 0.6
 }
 
 
 export interface Image2ExcelOptions {
   file: File
-  worksheetName?: string
+  bordered?: boolean
 }
 
 export class Image2Excel {
+  options: Image2ExcelOptions
+  originalFile: File
+  compressFile: Blob
+
+  fileName: string
   workbook: ExcelJS.Workbook
   worksheet: ExcelJS.Worksheet
   imageProcessor: ImageProcessor
 
   constructor(options: Image2ExcelOptions) {
-    const { worksheetName = "未命名", file } = options
-    this.imageProcessor = new ImageProcessor(file)
-    this.workbook = new ExcelJS.Workbook();
-    this.worksheet = this.workbook.addWorksheet(worksheetName)
-    this.init()
+    const { file } = options
+    this.options = options
+    this.fileName = file.name.split(".")[0]
+    this.originalFile = file
+
+    // 大于 20K 则进行压缩
+    if (file.size >= 20 * unit) {
+      const quality = getquality(file.size)
+      compressor(file, quality).then(res => {
+        console.log('quality: ', quality);
+        console.log(`压缩文件大小：${(res.size / 1024).toFixed(2)} K`)
+        console.log(`原始文件大小：${(file.size / 1024).toFixed(2)} K`)
+        this.compressFile = res
+        this.init(res as unknown as File)
+      })
+    } else {
+      this.init(file)
+    }
   }
 
-  async init() {
+  async init(file: File) {
+    this.workbook = new ExcelJS.Workbook();
+    this.worksheet = this.workbook.addWorksheet(this.fileName)
+    // this.worksheet.pageSetup.scale = 25
+    this.imageProcessor = new ImageProcessor(file)
+
     console.time("drawImage")
     const { ctx, canvas } = await this.imageProcessor.drawImage()
     console.timeEnd("drawImage")
@@ -105,39 +152,30 @@ export class Image2Excel {
       // 遍历 rowData 来设置每个单元格的样式  
       const columnKeys = Object.keys(row)
       columnKeys.forEach((cellKey, index) => {
-        
-        const cellId = cellKey + (rowIndex+1)
+        const cellId = cellKey + (rowIndex + 1)
         const cell = this.worksheet.getCell(cellId)
-        // header 行
-        if (rowIndex === 0) {
-          console.log('cell.value: ', cell.value);
-          cell.fill = {
-            type: "pattern",
-            pattern: "darkGrid",
-            bgColor: {
-              argb: `${cell.value}`
-            }
+        // header 无颜色配置，所以从下面一行开始
+        const nextRow = pixelMatrix[rowIndex]
+        const value = nextRow[index]
+
+        if (this.options.bordered) {
+          cell.border = {
+            top: { style: "double", color: { argb: `${cell.value}` } },
+            left: { style: 'double', color: { argb: `${cell.value}` } },
+            bottom: { style: 'double', color: { argb: `${cell.value}` } },
+            right: { style: 'double', color: { argb: `${cell.value}` } }
           }
-          cell.value = ""
-          return
+        } else {
+          cell.fill = {
+            type: 'gradient',
+            gradient: 'angle',
+            degree: 0,
+            stops: [
+              { position: 0, color: { argb: value } },
+              { position: 0, color: { argb: value } }
+            ]
+          }
         }
-
-        cell.fill = {
-          type: 'gradient',
-          gradient: 'angle',
-          degree: 0,
-          stops: [
-            { position: 0, color: { argb: `${cell.value}` } },
-            { position: 0, color: { argb: `${cell.value}` } }
-          ]
-        }
-        // cell.border = {
-        //   top: { style: "double", color: { argb: `${cell.value}` } },
-        //   left: { style: 'double', color: { argb: `${cell.value}` } },
-        //   bottom: { style: 'double', color: { argb: `${cell.value}` } },
-        //   right: { style: 'double', color: { argb: `${cell.value}` } }
-        // }
-
         cell.value = ""
       });
 
@@ -148,12 +186,12 @@ export class Image2Excel {
   }
 
   download() {
-    this.workbook.xlsx.writeBuffer().then(function (data) {
+    this.workbook.xlsx.writeBuffer().then((data) => {
       const blob = new Blob([data], { type: "application/octet-stream" });
       const url = URL.createObjectURL(blob);
       const anchor = document.createElement("a");
       anchor.href = url;
-      anchor.download = "测试文件.xlsx";
+      anchor.download = `img2excel-${this.fileName}.xlsx`;
       anchor.click();
       URL.revokeObjectURL(url);
     });
@@ -169,17 +207,21 @@ export class ImageProcessor {
       this.processor = new SvgProcessor(file)
       return
     }
-    this.processor = new Processor(file)
+    if (file.type.includes("image/")) {
+      this.processor = new Processor(file)
+      return
+    }
+    throw Error("非法的文件类型")
   }
 
   async drawImage(): Promise<{ image: HTMLImageElement, canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D }> {
     const base64 = await this.processor.getBase64()
     const canvas = document.querySelector('#img2excel-canvas') as HTMLCanvasElement || document.createElement('canvas')
     canvas.id = "img2excel-canvas"
-    
-    // canvas.style.top = "-10000px"
-    // canvas.style.left = "-10000px"
-    // canvas.style.position = "relative"
+
+    canvas.style.top = "-10000px"
+    canvas.style.left = "-10000px"
+    canvas.style.position = "relative"
 
     document.body.appendChild(canvas)
     const ctx = canvas.getContext('2d')
