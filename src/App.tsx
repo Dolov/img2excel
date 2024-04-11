@@ -67,12 +67,21 @@ function App() {
   return (
     <div className="flex overflow-auto h-full">
       <div className="w-full sm:w-1/4 m-6 p-6 flex flex-col overflow-auto bg-slate-100 bg-opacity-10">
-        <div className="flex-1">
+        <div className="flex-1 flex flex-col">
           <Upload accept="image/*" limit={1} draggable onChange={onChange} beforeUpload={() => false}>
-            <Button block icon={<IconUpload className="text-slate-200" />}>
+            <Button
+              block
+              icon={<IconUpload className="text-slate-200" />}
+              className="h-16 mb-6 bg-slate-600 bg-opacity-30 hover:!bg-slate-600 hover:!bg-opacity-40"
+            >
               <span className="text-slate-200">选择本地图片</span>
             </Button>
           </Upload>
+          {!image && (
+            <div className="flex flex-1 justify-center">
+              <img className="h-full w-3/4" src="https://dotown.maeda-design-room.net/wp-content/uploads/2022/02/cat-guest.svg" alt="" />
+            </div>
+          )}
           {image && (
             <div className="font-bold text-sm text-slate-200">
               <div className="mb-9">
@@ -102,13 +111,13 @@ function App() {
           block
           loading={loading}
           onClick={start}
-          className="!text-slate-200 bg-[#3e0f47]"
+          className="!text-slate-200 bg-[#3e0f47] bg-opacity-20 hover:!bg-[#3e0f47] hover:!bg-opacity-90"
         >
           开始生成
         </Button>
       </div>
       <div className="hidden sm:block flex-1 p-6 bg-slate-100 bg-opacity-10 m-6 ml-0">
-        <img className="w-full h-full" src="https://dotown.maeda-design-room.net/wp-content/uploads/2022/02/cat-guest.svg" alt="" />
+        <img className="w-full h-full" src="https://static-oss-files.oss-cn-beijing.aliyuncs.com/WX20240411-215256%402x.png" alt="" />
       </div>
     </div>
   )
