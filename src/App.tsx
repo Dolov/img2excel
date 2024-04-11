@@ -65,43 +65,50 @@ function App() {
   const { width, height, quality } = compressorProps || {}
 
   return (
-    <div className='container'>
-      <div style={{ background: "rgba(255,255,255,0.1)", width: "25%", margin: 24, padding: 24, display: "flex", flexDirection: "column", overflow: "auto" }}>
-        <div style={{ flex: 1 }}>
+    <div className="flex overflow-auto h-full">
+      <div className="w-full sm:w-1/4 m-6 p-6 flex flex-col overflow-auto bg-slate-100 bg-opacity-10">
+        <div className="flex-1">
           <Upload accept="image/*" limit={1} draggable onChange={onChange} beforeUpload={() => false}>
-            <Button block icon={<IconUpload style={{ color: "white" }} />}>
-              <span style={{ color: "white" }}>选择本地图片</span>
+            <Button block icon={<IconUpload className="text-slate-200" />}>
+              <span className="text-slate-200">选择本地图片</span>
             </Button>
           </Upload>
           {image && (
-            <div style={{ color: 'rgba(255, 255, 255, 0.85)', fontSize: 14, fontWeight: "bold" }}>
-              <div style={{ marginBottom: 36 }}>
-                <h4 style={{ fontSize: 20, padding: "6px 0" }}>图片信息</h4>
+            <div className="font-bold text-sm text-slate-200">
+              <div className="mb-9">
+                <h4 className="text-xl py-2">图片信息</h4>
                 <div>图片宽：{image?.width} px</div>
                 <div>图片高：{image?.height} px</div>
               </div>
               <div>
-                <h4 style={{ fontSize: 20, padding: "6px 0" }}>设置压缩参数</h4>
-                <div style={{ margin: "4px 0" }}>
-                  <span style={{ paddingRight: 8 }}>压缩系数</span>
+                <h4 className="text-xl py-2">设置压缩参数</h4>
+                <div className="my-1">
+                  <span className="pr-2">压缩系数</span>
                   <InputNumber value={quality} onChange={quality => onCompressPropsChange({ quality })} />
                 </div>
-                <div style={{ margin: "4px 0" }}>
-                  <span style={{ paddingRight: 8 }}>设置宽度</span>
+                <div className="my-1">
+                  <span className="pr-2">设置宽度</span>
                   <InputNumber value={width} onChange={width => onCompressPropsChange({ width })} />
                 </div>
-                <div style={{ margin: "4px 0" }}>
-                  <span style={{ paddingRight: 8 }}>设置高度</span>
+                <div className="my-1">
+                  <span className="pr-2">设置高度</span>
                   <InputNumber value={height} onChange={height => onCompressPropsChange({ height })} />
                 </div>
               </div>
             </div>
           )}
         </div>
-        <Button loading={loading} block onClick={start} style={{ color: "white", background: "#3e0f47" }}>开始生成</Button>
+        <Button
+          block
+          loading={loading}
+          onClick={start}
+          className="!text-slate-200 bg-[#3e0f47]"
+        >
+          开始生成
+        </Button>
       </div>
-      <div style={{ overflow: "auto", flex: 1, margin: "24px 24px 24px 0", padding: 24, background: "rgba(255,255,255,0.1)" }}>
-        <img style={{ width: "100%", height: "98%" }} src="https://dotown.maeda-design-room.net/wp-content/uploads/2022/02/cat-guest.svg" alt="" />
+      <div className="hidden sm:block flex-1 p-6 bg-slate-100 bg-opacity-10 m-6 ml-0">
+        <img className="w-full h-full" src="https://dotown.maeda-design-room.net/wp-content/uploads/2022/02/cat-guest.svg" alt="" />
       </div>
     </div>
   )
