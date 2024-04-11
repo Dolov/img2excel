@@ -212,9 +212,6 @@ export class Image2Excel {
 export class ImageProcessor {
 
   static getProcessor(file: File) {
-    if (file.type === "image/svg+xml") {
-      return new SvgProcessor(file)
-    }
     if (file.type.includes("image/")) {
       return new Processor(file)
     }
@@ -307,29 +304,5 @@ class Processor {
         resolve(base64data)
       }
     })
-  }
-}
-
-
-class SvgProcessor extends Processor {
-
-  constructor(file: File) {
-    super(file)
-  }
-
-  getFileText(): Promise<string> {
-    const fileReader = new FileReader()
-    return new Promise((resolve => {
-      fileReader.onload = function () {
-        resolve(fileReader.result as unknown as string)
-      }
-      fileReader.readAsText(this.file)
-    }))
-  }
-
-  async getBase64(): Promise<string> {
-    const text = await this.getFileText()
-    const blob = new Blob([text], { type: 'image/svg+xml;charset=utf-8' }); // 创建Blob对象  
-    return await super.getBase64(blob)
   }
 }
