@@ -44,13 +44,11 @@ const rgbaToArgb = (r: number, g: number, b: number, a: number) => {
   return hex;
 }
 
-const compressor = (file: File, quality: number): Promise<Blob> => {
+const compressor = (file: File, compressorProps?: Compressorjs.Options): Promise<Blob> => {
   return new Promise((resolve) => {
     new Compressorjs(file, {
-      quality,
       resize: "cover",
-      maxWidth: innerWidth * 0.5,
-      // maxHeight: innerHeight * 0.5,
+      ...compressorProps,
       success(result) {
         resolve(result)
       },
@@ -61,19 +59,30 @@ const compressor = (file: File, quality: number): Promise<Blob> => {
   })
 }
 
-const getquality = (fileSize: number) => {
+export const recommendQuality = (fileSize: number) => {
   for (let size = 9; size >= 1; size--) {
     if (fileSize / unit / unit > size) {
-      return 1 - size * 0.1
+      return Number((1 - size * 0.1).toFixed(2))
     }
   }
   return 0.6
 }
 
+export const recommendSize = (image: HTMLImageElement) => {
+  const { width, height } = image
+  const rWidth = width
+  const rHeight = height
+  return {
+    width: Math.ceil(rWidth),
+    height: Math.ceil(rHeight),
+  }
+}
 
 export interface Image2ExcelOptions {
   file: File
-  bordered?: boolean
+  worksheets: string[]
+  compressorProps?: Compressorjs.Options
+  [key: string]: any
 }
 
 export class Image2Excel {
@@ -83,20 +92,18 @@ export class Image2Excel {
 
   fileName: string
   workbook: ExcelJS.Workbook
-  worksheet: ExcelJS.Worksheet
   imageProcessor: ImageProcessor
 
   constructor(options: Image2ExcelOptions) {
-    const { file } = options
+    const { file, compressorProps } = options
     this.options = options
     this.fileName = file.name.split(".")[0]
     this.originalFile = file
 
+    const compress = compressorProps && Object.keys(compressorProps).length
     // 大于 20K 则进行压缩
-    if (file.size >= 20 * unit) {
-      const quality = getquality(file.size)
-      compressor(file, quality).then(res => {
-        console.log('quality: ', quality);
+    if (file.size >= 20 * unit || compress) {
+      compressor(file, compressorProps).then(res => {
         console.log(`压缩文件大小：${(res.size / 1024).toFixed(2)} K`)
         console.log(`原始文件大小：${(file.size / 1024).toFixed(2)} K`)
         this.compressFile = res
@@ -109,39 +116,41 @@ export class Image2Excel {
 
   async init(file: File) {
     this.workbook = new ExcelJS.Workbook();
-    this.worksheet = this.workbook.addWorksheet(this.fileName)
-    // this.worksheet.pageSetup.scale = 25
+
     this.imageProcessor = new ImageProcessor(file)
 
     console.time("drawImage")
-    const { ctx, canvas } = await this.imageProcessor.drawImage()
+    const { ctx, canvas, image } = await this.imageProcessor.drawImage()
     console.timeEnd("drawImage")
 
     console.time("getImagePixels")
     const pixelMatrix = this.imageProcessor.getImagePixels(ctx, canvas)
     console.timeEnd("getImagePixels")
 
-    console.time("setColumns")
-    this.setColumns(pixelMatrix)
-    console.timeEnd("setColumns")
+    this.options.worksheets.forEach((type, index) => {
+      const worksheet = this.workbook.addWorksheet(`${this.fileName}-${index + 1}`)
+      console.time("setColumns")
+      this.setColumns(worksheet, pixelMatrix)
+      console.timeEnd("setColumns")
 
-    console.time("setRows")
-    this.setRows(pixelMatrix)
-    console.timeEnd("setRows")
+      console.time("setRows")
+      this.setRows(worksheet, pixelMatrix, type)
+      console.timeEnd("setRows")
+    })
 
     console.time("download")
     this.download()
     console.timeEnd("download")
   }
 
-  setColumns(pixelMatrix: string[][]) {
-    this.worksheet.columns = pixelMatrix[0].map((item, index) => {
+  setColumns(worksheet: ExcelJS.Worksheet, pixelMatrix: string[][]) {
+    worksheet.columns = pixelMatrix[0].map((item, index) => {
       const key = getKey(index)
       return { header: key, key, width: 3 }
     })
   }
 
-  setRows(pixelMatrix: string[][]) {
+  setRows(worksheet: ExcelJS.Worksheet, pixelMatrix: string[][], renderType: string) {
     pixelMatrix.forEach((item, rowIndex) => {
       const row: Record<string, any> = {}
       item.forEach((itemc, cellIndex) => {
@@ -153,19 +162,12 @@ export class Image2Excel {
       const columnKeys = Object.keys(row)
       columnKeys.forEach((cellKey, index) => {
         const cellId = cellKey + (rowIndex + 1)
-        const cell = this.worksheet.getCell(cellId)
+        const cell = worksheet.getCell(cellId)
         // header 无颜色配置，所以从下面一行开始
         const nextRow = pixelMatrix[rowIndex]
         const value = nextRow[index]
 
-        if (this.options.bordered) {
-          cell.border = {
-            top: { style: "double", color: { argb: `${cell.value}` } },
-            left: { style: 'double', color: { argb: `${cell.value}` } },
-            bottom: { style: 'double', color: { argb: `${cell.value}` } },
-            right: { style: 'double', color: { argb: `${cell.value}` } }
-          }
-        } else {
+        if (renderType === "background") {
           cell.fill = {
             type: 'gradient',
             gradient: 'angle',
@@ -176,12 +178,21 @@ export class Image2Excel {
             ]
           }
         }
+
+        if (renderType === "border-double") {
+          cell.border = {
+            top: { style: "double", color: { argb: value } },
+            left: { style: 'double', color: { argb: value } },
+            bottom: { style: 'double', color: { argb: value } },
+            right: { style: 'double', color: { argb: value } }
+          }
+        }
         cell.value = ""
       });
 
       // 因为从头部行开始设置了颜色，所以删除掉最后一行，否则会导致多余一行
       if (rowIndex === pixelMatrix.length - 1) return
-      this.worksheet.addRow(row)
+      worksheet.addRow(row)
     })
   }
 
@@ -199,23 +210,37 @@ export class Image2Excel {
 }
 
 export class ImageProcessor {
-  pixelMatrix: string[][] = []
-  processor: Processor
 
-  constructor(file: File) {
+  static getProcessor(file: File) {
     if (file.type === "image/svg+xml") {
-      this.processor = new SvgProcessor(file)
-      return
+      return new SvgProcessor(file)
     }
     if (file.type.includes("image/")) {
-      this.processor = new Processor(file)
-      return
+      return new Processor(file)
     }
     throw Error("非法的文件类型")
   }
 
+  static async getImage(file: File): Promise<HTMLImageElement> {
+    const processor = ImageProcessor.getProcessor(file)
+    const base64 = await processor.getBase64()
+    const image = new Image();
+    return new Promise((resolve => {
+      image.onload = () => {
+        resolve(image)
+      }
+      image.src = base64
+    }))
+  }
+
+  file: File
+  constructor(file: File) {
+    this.file = file
+  }
+
+
   async drawImage(): Promise<{ image: HTMLImageElement, canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D }> {
-    const base64 = await this.processor.getBase64()
+    const image = await ImageProcessor.getImage(this.file)
     const canvas = document.querySelector('#img2excel-canvas') as HTMLCanvasElement || document.createElement('canvas')
     canvas.id = "img2excel-canvas"
 
@@ -225,16 +250,13 @@ export class ImageProcessor {
 
     document.body.appendChild(canvas)
     const ctx = canvas.getContext('2d')
-    const image = new Image();
+
     return new Promise(resolve => {
-      image.onload = () => {
-        const { width, height } = image
-        canvas.width = width
-        canvas.height = height
-        ctx!.drawImage(image, 0, 0, width, height);
-        resolve({ image, canvas, ctx: ctx! })
-      }
-      image.src = base64
+      const { width, height } = image
+      canvas.width = width
+      canvas.height = height
+      ctx!.drawImage(image, 0, 0, width, height);
+      resolve({ image, canvas, ctx: ctx! })
     })
   }
 
@@ -242,6 +264,7 @@ export class ImageProcessor {
     // 获取图片的像素数据  
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
     const data = imageData.data;
+    const pixelMatrix = []
     let row = []
     for (let i = 0; i <= data.length; i += 4) {
       let r = data[i];     // 红色分量  
@@ -259,11 +282,11 @@ export class ImageProcessor {
       const argb = rgbaToArgb(r, g, b, a)
       row.push(argb)
       if (row.length % canvas.width === 0) {
-        this.pixelMatrix.push([...row]);
+        pixelMatrix.push([...row]);
         row = []
       }
     }
-    return this.pixelMatrix
+    return pixelMatrix
   }
 }
 

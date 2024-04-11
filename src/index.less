@@ -15,4 +15,24 @@ html, body, #root {
 
 .container {
   flex: 1;
+  display: flex;
+  overflow: auto;
+}
+
+.semi-upload-file-list {
+  .semi-upload-file-list-title, .semi-upload-file-list-title-clear {
+    color: rgba(var(--semi-grey-0), 1);
+  }
+}
+
+.semi-input {
+  color: rgba(255, 255, 255, 0.85);
+  font-weight: bold;
+}
+
+.semi-input-wrapper-focus {
+  border-color: white;
+  &:hover {
+    border-color: white;
+  }
 }

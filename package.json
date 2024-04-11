@@ -10,6 +10,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@douyinfe/semi-icons": "^2.55.5",
+    "@douyinfe/semi-ui": "^2.55.5",
     "antd": "^5.16.1",
     "canvg": "^4.0.1",
     "compressorjs": "^1.2.1",
