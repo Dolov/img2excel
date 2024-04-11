@@ -8,6 +8,7 @@ import { Image2Excel, ImageProcessor, recommendQuality, recommendSize } from './
 function App() {
 
   const fileRef = React.useRef<File>()
+  const [loading, setLoading] = React.useState(false)
   const [image, setImage] = React.useState<HTMLImageElement>()
   const [compressorProps, setCompressorProps] = React.useState<{
     width: number,
@@ -40,13 +41,17 @@ function App() {
 
   const start = () => {
     if (!fileRef.current) return
+    setLoading(true)
     const image2Excel = new Image2Excel({
       file: fileRef.current!,
       compressorProps,
       worksheets: [
         "background",
         "border-double",
-      ]
+      ],
+    })
+    image2Excel.init().then(res => {
+      setLoading(false)
     })
   }
 
@@ -63,7 +68,7 @@ function App() {
     <div className='container'>
       <div style={{ background: "rgba(255,255,255,0.1)", width: "25%", margin: 24, padding: 24, display: "flex", flexDirection: "column", overflow: "auto" }}>
         <div style={{ flex: 1 }}>
-          <Upload limit={1} draggable onChange={onChange} beforeUpload={() => false}>
+          <Upload accept="image/*" limit={1} draggable onChange={onChange} beforeUpload={() => false}>
             <Button block icon={<IconUpload style={{ color: "white" }} />}>
               <span style={{ color: "white" }}>选择本地图片</span>
             </Button>
@@ -93,18 +98,10 @@ function App() {
             </div>
           )}
         </div>
-        <Button block onClick={start} style={{ color: "white", background: "#3e0f47" }}>开始生成</Button>
+        <Button loading={loading} block onClick={start} style={{ color: "white", background: "#3e0f47" }}>开始生成</Button>
       </div>
       <div style={{ overflow: "auto", flex: 1, margin: "24px 24px 24px 0", padding: 24, background: "rgba(255,255,255,0.1)" }}>
-        <div
-          style={{
-            width: "100%", height: "100%",
-            // background: "url(https://static-oss-files.oss-cn-beijing.aliyuncs.com/WX20240410-174740%402x.png)",
-            borderRadius: 10,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-          }}
-        />
+        <img style={{ width: "100%", height: "98%" }} src="https://dotown.maeda-design-room.net/wp-content/uploads/2022/02/cat-guest.svg" alt="" />
       </div>
     </div>
   )

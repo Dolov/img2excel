@@ -70,11 +70,59 @@ export const recommendQuality = (fileSize: number) => {
 
 export const recommendSize = (image: HTMLImageElement) => {
   const { width, height } = image
-  const rWidth = width
-  const rHeight = height
+
+  if (width <= 200) return {
+    width,
+    height,
+  }
+
+  const rates = [{
+    threshold: 200,
+    rate: 0.2
+  },
+  {
+    threshold: 400,
+    rate: 0.4
+  },
+  {
+    threshold: 600,
+    rate: 0.6
+  },
+  {
+    threshold: 800,
+    rate: 0.8
+  },
+  {
+    threshold: 1000,
+    rate: 0.9
+  },
+  {
+    threshold: 2000,
+    rate: 0.99
+  }
+  ]
+
+  let compressedWidth = width;
+  for (let i = 0; i < rates.length; i++) {
+    const { threshold, rate } = rates[i];
+    if (compressedWidth > threshold) {
+      // 计算超过当前阈值的部分，并应用对应的税率进行压缩  
+      const excess = compressedWidth - threshold;
+      const deduction = excess * rate;
+      compressedWidth -= deduction;
+
+      // 如果压缩后的宽度小于等于下一个较低的阈值，则跳出循环  
+      if (compressedWidth <= (i > 0 ? rates[i - 1].threshold : 0)) {
+        break;
+      }
+    }
+  }
+
+  const rate = compressedWidth / width
+
   return {
-    width: Math.ceil(rWidth),
-    height: Math.ceil(rHeight),
+    width: Math.ceil(compressedWidth),
+    height: Math.ceil(height * rate),
   }
 }
 
@@ -88,36 +136,27 @@ export interface Image2ExcelOptions {
 export class Image2Excel {
   options: Image2ExcelOptions
   originalFile: File
-  compressFile: Blob
 
   fileName: string
   workbook: ExcelJS.Workbook
   imageProcessor: ImageProcessor
 
   constructor(options: Image2ExcelOptions) {
-    const { file, compressorProps } = options
+    const { file } = options
     this.options = options
     this.fileName = file.name.split(".")[0]
     this.originalFile = file
-
-    const compress = compressorProps && Object.keys(compressorProps).length
-    // 大于 20K 则进行压缩
-    if (file.size >= 20 * unit || compress) {
-      compressor(file, compressorProps).then(res => {
-        console.log(`压缩文件大小：${(res.size / 1024).toFixed(2)} K`)
-        console.log(`原始文件大小：${(file.size / 1024).toFixed(2)} K`)
-        this.compressFile = res
-        this.init(res as unknown as File)
-      })
-    } else {
-      this.init(file)
-    }
   }
 
-  async init(file: File) {
+  async init() {
+    const compressFile = await compressor(this.originalFile, this.options.compressorProps)
+    console.log(`压缩文件大小：${(compressFile.size / 1024).toFixed(2)} K`)
+    console.log(`原始文件大小：${(this.originalFile.size / 1024).toFixed(2)} K`)
+
     this.workbook = new ExcelJS.Workbook();
 
-    this.imageProcessor = new ImageProcessor(file)
+    console.log('this.compressFile: ', compressFile);
+    this.imageProcessor = new ImageProcessor(compressFile as unknown as File)
 
     console.time("drawImage")
     const { ctx, canvas, image } = await this.imageProcessor.drawImage()
