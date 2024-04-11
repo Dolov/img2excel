@@ -117,7 +117,7 @@ function App() {
         </Button>
       </div>
       <div className="hidden sm:block flex-1 p-6 bg-slate-100 bg-opacity-10 m-6 ml-0">
-        <img className="w-full h-full" src="https://static-oss-files.oss-cn-beijing.aliyuncs.com/WX20240411-215256%402x.png" alt="" />
+        <img className="w-full h-full object-cover" src="https://static-oss-files.oss-cn-beijing.aliyuncs.com/WX20240411-215256%402x.png" alt="" />
       </div>
     </div>
   )
