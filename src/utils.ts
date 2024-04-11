@@ -167,7 +167,9 @@ export class Image2Excel {
     console.timeEnd("getImagePixels")
 
     this.options.worksheets.forEach((type, index) => {
-      const worksheet = this.workbook.addWorksheet(`${this.fileName}-${index + 1}`)
+      // ExcelJS 名称最大保留长度为 31
+      const name = `${this.fileName.slice(0, 28)}-${index + 1}`
+      const worksheet = this.workbook.addWorksheet(name)
       console.time("setColumns")
       this.setColumns(worksheet, pixelMatrix)
       console.timeEnd("setColumns")
